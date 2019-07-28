@@ -43,8 +43,12 @@ namespace HttpHost.Controllers
                 var argsFormat = _configuration.GetValue<string>("Arguments");
                 var timeoutInMs = _configuration.GetValue<int>("TimeoutInMs");
                 var name = file.FileName;
-                var input = GetTempFileWithExtension(name);
-                var output = GetTempFileWithExtension(name, extension);
+                var tempDir = new DirectoryInfo(Path.Combine(Path.GetTempPath(),
+                    Guid.NewGuid().ToString()));
+                tempDir.Create();
+                tempDir.Refresh();
+                var input = GetTempFileWithExtension(tempDir, name);
+                var output = GetTempFileWithExtension(tempDir, name, extension);
 
                 try
                 {
@@ -75,6 +79,7 @@ namespace HttpHost.Controllers
                 {
                     input.Delete();
                     output.Delete();
+                    tempDir.Delete();
                 }
             }
         }
@@ -98,12 +103,12 @@ namespace HttpHost.Controllers
             }
         }
 
-        private FileInfo GetTempFileWithExtension(string name, string extension = null)
+        private FileInfo GetTempFileWithExtension(DirectoryInfo di, string name, string extension = null)
         {
             return new FileInfo(Path.Combine(
-                    Path.GetTempPath(),
+                    di.FullName,
                     string.Concat(
-                        Path.GetRandomFileName(),
+                        Path.GetFileNameWithoutExtension(name),
                         extension == null ? Path.GetExtension(name) : extension)));
         }
     }
